@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环境监测终端 RK3568 — 项目架构图</title>
+<style>
+  :root {
+    --bg: #0e1217;
+    --panel: #1a2029;
+    --panel2: #202936;
+    --border: #2c3746;
+    --text: #e8edf4;
+    --text-dim: #9aa8b8;
+    --blue: #3488e3;
+    --blue-dim: #1d4e86;
+    --purple: #c77de0;
+    --green: #66c966;
+    --orange: #ff8c33;
+    --red: #f54831;
+    --yellow: #ffd966;
+    --mono: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    padding: 24px 20px 60px;
+    min-height: 100vh;
+  }
+  header {
+    max-width: 1200px;
+    margin: 0 auto 8px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  h1 {
+    font-size: 24px;
+    letter-spacing: 1px;
+  }
+  h1 .dot { color: var(--green); }
+  .subtitle { color: var(--text-dim); font-size: 13px; margin-top: 6px; }
+  .meta { color: var(--text-dim); font-size: 12px; font-family: var(--mono); text-align: right; }
+  .meta b { color: var(--yellow); }
+
+  /* Tabs */
+  nav {
+    max-width: 1200px;
+    margin: 20px auto 0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 9px 18px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all .15s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); border-color: #3d4c60; }
+  .tab.active {
+    background: var(--blue-dim);
+    border-color: var(--blue);
+    color: #fff;
+    font-weight: 600;
+  }
+  section.panel {
+    display: none;
+    max-width: 1200px;
+    margin: 16px auto 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 28px 30px;
+  }
+  section.panel.active { display: block; }
+  .panel h2 {
+    font-size: 17px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel h2 .idx {
+    display: inline-flex;
+    width: 26px; height: 26px;
+    align-items: center; justify-content: center;
+    background: var(--blue); color: #fff;
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+  .panel .desc { color: var(--text-dim); font-size: 12.5px; margin-bottom: 20px; }
+
+  /* ============ 分层架构 ============ */
+  .layer {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+  .layer-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel2);
+  }
+  .layer-row + .layer-arrow { align-self: center; margin: 2px 0; color: var(--text-dim); font-size: 18px; }
+  .layer-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .layer-title .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 400;
+    font-family: var(--mono);
+  }
+  .layer-l1 .layer-title { color: #7fb3f0; }
+  .layer-l1 .badge { background: rgba(52,136,227,.15); color: #7fb3f0; border: 1px solid rgba(52,136,227,.4); }
+  .layer-l2 .layer-title { color: #d9a8ec; }
+  .layer-l2 .badge { background: rgba(199,125,224,.15); color: #d9a8ec; border: 1px solid rgba(199,125,224,.4); }
+  .layer-l3 .layer-title { color: #8fd98f; }
+  .layer-l3 .badge { background: rgba(102,201,102,.13); color: #8fd98f; border: 1px solid rgba(102,201,102,.4); }
+  .layer-l4 .layer-title { color: #ffb077; }
+  .layer-l4 .badge { background: rgba(255,140,51,.13); color: #ffb077; border: 1px solid rgba(255,140,51,.4); }
+  .mods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .mod {
+    background: #161d26;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 8px;
+    padding: 8px 13px;
+    min-width: 110px;
+    transition: transform .12s, border-color .12s, background .12s;
+    cursor: default;
+  }
+  .mod:hover { transform: translateY(-2px); border-color: var(--blue); background: #1b2430; }
+  .mod .name { font-size: 13px; font-weight: 600; }
+  .mod .file { font-size: 10.5px; color: var(--text-dim); font-family: var(--mono); margin-top: 3px; }
+  .mod.c-purple { border-left-color: var(--purple); }
+  .mod.c-green  { border-left-color: var(--green); }
+  .mod.c-orange { border-left-color: var(--orange); }
+  .mod.c-yellow { border-left-color: var(--yellow); }
+  .mod.c-red    { border-left-color: var(--red); }
+
+  .kernel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+  .knode {
+    background: #141b23;
+    border: 1px dashed #3a4a5e;
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text);
+    text-align: center;
+  }
+  .knode span { color: var(--text-dim); }
+
+  /* ============ 数据流 ============ */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .flow-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 14px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .flow-line .tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 9px;
+    margin-right: 6px;
+    white-space: nowrap;
+  }
+  .tag.cam { background: rgba(52,136,227,.2); color: #7fb3f0; border: 1px solid rgba(52,136,227,.45); }
+  .tag.sen { background: rgba(102,201,102,.15); color: #8fd98f; border: 1px solid rgba(102,201,102,.4); }
+  .tag.net { background: rgba(255,140,51,.15); color: #ffb077; border: 1px solid rgba(255,140,51,.4); }
+  .fnode {
+    background: #161d26;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 11px;
+    font-size: 12.5px;
+    text-align: center;
+    min-width: 74px;
+  }
+  .fnode small { display: block; color: var(--text-dim); font-size: 10px; font-family: var(--mono); margin-top: 2px; }
+  .fnode.hl { border-color: var(--green); }
+  .arrow { color: #5b6b7f; font-size: 17px; font-weight: 700; }
+
+  /* ============ 线程模型 ============ */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    background: var(--panel2);
+    color: var(--text);
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    font-size: 12.5px;
+    letter-spacing: .5px;
+  }
+  td {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    vertical-align: top;
+  }
+  td code, .mono { font-family: var(--mono); font-size: 12px; color: #bcd6f0; }
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .pill.run { background: rgba(102,201,102,.15); color: #8fd98f; border: 1px solid rgba(102,201,102,.4); }
+  .pill.cond { background: rgba(255,217,102,.12); color: #ffd966; border: 1px solid rgba(255,217,102,.35); }
+  .pill.ui   { background: rgba(52,136,227,.15); color: #7fb3f0; border: 1px solid rgba(52,136,227,.4); }
+  .lock-tip { margin-top: 16px; font-size: 12.5px; color: var(--text-dim); line-height: 1.9; }
+  .lock-tip b { color: var(--yellow); font-family: var(--mono); }
+
+  /* ============ UI 流转 ============ */
+  .ui-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .ui-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .ui-node {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 16px;
+    text-align: center;
+    min-width: 108px;
+  }
+  .ui-node .en { font-size: 12px; font-weight: 700; }
+  .ui-node .zh { font-size: 10.5px; color: var(--text-dim); margin-top: 2px; font-family: var(--mono); }
+  .ui-node.boot { border-color: #5b6b7f; }
+  .ui-node.login { border-color: var(--orange); }
+  .ui-node.home { border-color: var(--green); }
+  .ui-node.fn { border-color: var(--blue); }
+  .ui-arrow { color: #5b6b7f; font-size: 16px; }
+  .ui-note { color: var(--text-dim); font-size: 12px; text-align: center; margin-top: 18px; line-height: 1.8; }
+  .ui-note code { font-family: var(--mono); color: #bcd6f0; }
+
+  footer {
+    max-width: 1200px;
+    margin: 18px auto 0;
+    color: var(--text-dim);
+    font-size: 11.5px;
+    text-align: center;
+    line-height: 1.8;
+  }
+  @media (max-width: 720px) {
+    .mods { flex-direction: column; }
+    .mod { min-width: 0; }
+    .flow-line { flex-direction: column; align-items: flex-start; }
+    .arrow { transform: rotate(90deg); align-self: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>环境监测终端 <span class="dot">●</span> RK3568 <span style="color:var(--text-dim);font-size:15px;font-weight:400;">项目架构图</span></h1>
+    <div class="subtitle">LVGL 9 · V4L2 · RKNPU2(YOLOv8) · GY39 传感器 · 自研 TCP 协议服务端/客户端</div>
+  </div>
+  <div class="meta">
+    源码范围：<b>src/</b> + <b>tcp_client/</b>（不含 font_*.c 字阵）<br>
+    平台：aarch64-linux（RK3568） · 1024×600 触摸屏
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" data-t="arch">① 总体分层架构</div>
+  <div class="tab" data-t="flow">② 核心数据流</div>
+  <div class="tab" data-t="thread">③ 线程模型</div>
+  <div class="tab" data-t="ui">④ 界面流转</div>
+</nav>
+
+<!-- ================= ① 分层架构 ================= -->
+<section class="panel active" id="arch">
+  <h2><span class="idx">1</span>系统分层架构</h2>
+  <div class="desc">UI 层（LVGL 主线程）→ 业务线程层 → 驱动抽象层 → 内核/硬件。箭头表示向下调用、向上返回数据。</div>
+
+  <div class="layer">
+    <!-- UI 层 -->
+    <div class="layer-row layer-l1">
+      <div class="layer-title">UI 层 — LVGL 9 <span class="badge">lv_timer_handler 主循环 5ms</span></div>
+      <div class="mods">
+        <div class="mod"><div class="name">开机动画屏</div><div class="file">ui_boot_src.c · 2.5s 跳登录</div></div>
+        <div class="mod"><div class="name">登录屏</div><div class="file">ui_login_src.c · 密码校验</div></div>
+        <div class="mod c-green"><div class="name">首页</div><div class="file">ui_home_scr.c · 状态卡片/3×2 入口</div></div>
+        <div class="mod"><div class="name">实时画面</div><div class="file">ui_camera_src.c · 采集/拍照/AI 开关</div></div>
+        <div class="mod c-purple"><div class="name">离线 AI 识别</div><div class="file">ui_ai_src.c · BMP 浏览推理</div></div>
+        <div class="mod c-green"><div class="name">环境监测</div><div class="file">ui_env_scr.c · 5 参数卡片</div></div>
+        <div class="mod c-orange"><div class="name">服务器管理</div><div class="file">ui_server_src.c · 启停/客户端/文件</div></div>
+        <div class="mod c-yellow"><div class="name">硬件控制</div><div class="file">ui_divice_scr.c · LED/BEEP</div></div>
+        <div class="mod c-red"><div class="name">系统设置</div><div class="file">ui_settings_src.c · 配置/关机重启</div></div>
+        <div class="mod c-orange"><div class="name">通用控件库</div><div class="file">ui_widget.c · 按钮/弹窗/滑块/软键盘</div></div>
+        <div class="mod c-orange"><div class="name">UI 主控</div><div class="file">ui_main.c · 全局键盘/界面创建</div></div>
+      </div>
+    </div>
+    <div class="layer-arrow">▼</div>
+
+    <!-- 线程层 -->
+    <div class="layer-row layer-l2">
+      <div class="layer-title">业务线程层 — pthread <span class="badge">协作式停止：flag + join</span></div>
+      <div class="mods">
+        <div class="mod c-purple"><div class="name">摄像头采集线程</div><div class="file">thread/camera_thread.c · 1/fps</div></div>
+        <div class="mod c-purple"><div class="name">AI 推理线程</div><div class="file">thread/ai_thread.c · ~200ms/帧</div></div>
+        <div class="mod c-purple"><div class="name">GY39 传感器线程</div><div class="file">thread/gy39_thread.c · 阻塞读串口</div></div>
+        <div class="mod c-purple"><div class="name">TCP 服务线程</div><div class="file">thread/tcp_server_thread.c · detached</div></div>
+        <div class="mod c-purple"><div class="name">每连接 收/发 双线程</div><div class="file">tcp_server.c · recv/send ×64 连接</div></div>
+        <div class="mod c-purple"><div class="name">YOLOv8 后台处理线程</div><div class="file">tcp_cmd_parser.c · 远程推理</div></div>
+      </div>
+    </div>
+    <div class="layer-arrow">▼</div>
+
+    <!-- 驱动抽象层 -->
+    <div class="layer-row layer-l3">
+      <div class="layer-title">驱动抽象层 — 用户态直接操作内核接口 <span class="badge">C/C++ 混合（ai/ 为 C++）</span></div>
+      <div class="mods">
+        <div class="mod"><div class="name">V4L2 摄像头</div><div class="file">camera/v4l2_camera.c · mmap 三缓冲</div></div>
+        <div class="mod"><div class="name">LVGL 画面适配</div><div class="file">camera/camera_lvgl.c · ARGB 双缓冲</div></div>
+        <div class="mod"><div class="name">串口驱动</div><div class="file">sensor/serial.c · termios 8N1</div></div>
+        <div class="mod"><div class="name">GY39 协议</div><div class="file">sensor/GY39.c · 帧解析/校验和</div></div>
+        <div class="mod"><div class="name">YOLOv8 C 封装</div><div class="file">ai/yolov8_wrap.cpp · extern "C"</div></div>
+        <div class="mod"><div class="name">RKNN 推理</div><div class="file">ai/yolov8.cpp · rknn_api</div></div>
+        <div class="mod"><div class="name">YOLOv8 后处理</div><div class="file">ai/postprocess.cpp · INT8/NMS</div></div>
+        <div class="mod c-green"><div class="name">图像/检测框/BMP</div><div class="file">image/* · 画框/抓拍/缩放</div></div>
+        <div class="mod c-yellow"><div class="name">GPIO 工具</div><div class="file">device/gpio_util.c · sysfs</div></div>
+        <div class="mod c-yellow"><div class="name">LED ×4 / BEEP</div><div class="file">device/led.c · beep.c</div></div>
+        <div class="mod c-orange"><div class="name">TCP 协议库</div><div class="file">network/tcp_protocol.c · 32B 包头</div></div>
+        <div class="mod c-orange"><div class="name">TCP 服务端</div><div class="file">network/tcp_server.c</div></div>
+        <div class="mod c-orange"><div class="name">服务端命令路由</div><div class="file">network/tcp_cmd_parser.c</div></div>
+        <div class="mod c-orange"><div class="name">配置管理</div><div class="file">config_manager.c · system_config.txt</div></div>
+      </div>
+    </div>
+    <div class="layer-arrow">▼</div>
+
+    <!-- 内核/硬件层 -->
+    <div class="layer-row layer-l4">
+      <div class="layer-title">Linux 内核 / 硬件 — RK3568 SoC <span class="badge">TARGET_SOC = rk356x</span></div>
+      <div class="kernel-grid">
+        <div class="knode">/dev/video9 <span>· USB/CSI 摄像头</span></div>
+        <div class="knode">/dev/ttyS4 <span>· GY39 传感器</span></div>
+        <div class="knode">/sys/class/gpio <span>· LED 120/121/123/124 · BEEP 111</span></div>
+        <div class="knode">/dev/fb0 <span>· 显示</span></div>
+        <div class="knode">/dev/input/event6 <span>· 触摸屏</span></div>
+        <div class="knode">RKNPU2 <span>· yolov8.rknn INT8</span></div>
+        <div class="knode">librga <span>· 图像格式转换/resize</span></div>
+        <div class="knode">以太网 <span>· TCP :8888</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ② 数据流 ================= -->
+<section class="panel" id="flow">
+  <h2><span class="idx">2</span>核心数据流</h2>
+  <div class="desc">三条主链路：实时画面+AI 画框、环境传感器、网络通信。锁保护点已标注。</div>
+
+  <div class="flow">
+    <!-- 摄像头链路 -->
+    <div class="flow-line">
+      <span class="tag cam">链路 ① 实时画面 + AI 画框</span>
+      <div class="fnode">/dev/video9<small>YUYV 640×480</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">camera_thread<small>V4L2 DQBUF</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode hl">双缓冲 ARGB8888<small>frame_lock 互斥</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">ai_thread<small>camera_snapshot 取帧</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">yolov8_detect<small>RGA 转换 + NPU</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode hl">g_latest_result<small>g_result_lock</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">camera_lvgl_update<small>33ms UI 定时器</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">lv_image 控件<small>叠加检测框</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">/dev/fb0<small>显示</small></div>
+    </div>
+
+    <!-- 传感器链路 -->
+    <div class="flow-line">
+      <span class="tag sen">链路 ② 环境监测</span>
+      <div class="fnode">GY39<small>/dev/ttyS4 9600</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">gy39_thread<small>逐字节读 + 帧头 0x5A5A</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">gy39_parse_frame<small>校验和 + 类型分发</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode hl">latest_lux / latest_env<small>gy39_data_lock</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">ui_env_scr 定时器<small>500ms 读缓存</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">参数卡片<small>温度/湿度/气压/光照/海拔</small></div>
+    </div>
+
+    <!-- 网络链路 -->
+    <div class="flow-line">
+      <span class="tag net">链路 ③ 网络通信（服务端）</span>
+      <div class="fnode">tcp_client<small>命令行客户端</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">server_thread<small>accept 循环</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode hl">每连接 recv/send 双线程<small>发送队列 send_mtx · socket_mtx</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode">cmd_server_dispatch<small>pkt_sub_type 路由</small></div>
+      <div class="arrow">→</div>
+      <div class="fnode" style="border-color:var(--yellow);">聊天广播 / 私聊<small>client_mgr 链表</small></div>
+      <div class="fnode" style="border-color:var(--yellow);">文件上传/下载<small>./uploads/</small></div>
+      <div class="fnode" style="border-color:var(--yellow);">LED / BEEP 控制<small>device 模块</small></div>
+      <div class="fnode" style="border-color:var(--yellow);">远程 YOLOv8 推理<small>后台线程 + 完成通知</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ③ 线程模型 ================= -->
+<section class="panel" id="thread">
+  <h2><span class="idx">3</span>线程模型与并发安全</h2>
+  <div class="desc">LVGL 非线程安全：所有 UI 更新只在主循环线程；后台线程只写"数据缓存"，UI 定时器搬运到控件。</div>
+
+  <table>
+    <thead>
+      <tr><th>线程</th><th>数量</th><th>启动条件</th><th>周期/行为</th><th>停止方式</th><th>对外共享数据（锁）</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>main</code></td>
+        <td><span class="pill run">1</span></td>
+        <td>常驻</td>
+        <td>LVGL 主循环 <code>lv_timer_handler + usleep(5ms)</code></td>
+        <td>退出程序</td>
+        <td>全部 UI 对象</td>
+      </tr>
+      <tr>
+        <td><code>camera_thread</code></td>
+        <td><span class="pill cond">0~1</span></td>
+        <td>实时画面界面点"开启摄像头"</td>
+        <td><code>camera_capture_frame()</code> + 按 fps 节流</td>
+        <td><code>cam_thread_stop</code> → join</td>
+        <td>V4L2 双缓冲 <code>frame_lock</code></td>
+      </tr>
+      <tr>
+        <td><code>ai_thread</code></td>
+        <td><span class="pill cond">0~1</span></td>
+        <td>点"ai识别"按钮（需摄像头已开）</td>
+        <td>快照→推理→缓存结果，200ms/帧</td>
+        <td><code>ai_thread_stop</code> → join</td>
+        <td><code>g_latest_result</code> <code>g_result_lock</code></td>
+      </tr>
+      <tr>
+        <td><code>gy39_thread</code></td>
+        <td><span class="pill cond">0~1</span></td>
+        <td>目前由设置开关控制（配置项 env_monitor_enabled）</td>
+        <td>阻塞读串口 → 组帧解析</td>
+        <td><code>gy39_thread_stop</code> → join</td>
+        <td><code>latest_lux/env</code> <code>gy39_data_lock</code></td>
+      </tr>
+      <tr>
+        <td><code>server_thread</code></td>
+        <td><span class="pill cond">0~1</span></td>
+        <td>服务器界面点"启动服务器"</td>
+        <td>阻塞 accept（detached）</td>
+        <td>关闭 listen fd 唤醒退出</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><code>每连接 recv/send</code></td>
+        <td><span class="pill cond">0~128</span></td>
+        <td>新客户端 accept 成功</td>
+        <td>recv 阻塞解包分发；send 轮询发送队列</td>
+        <td>关 fd → join</td>
+        <td>发送队列 <code>send_mtx</code> · 写 socket <code>socket_mtx</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="lock-tip">
+    <b>关键并发规则：</b><br>
+    ① 文件数据直发（P2P 中转 / 上传 / 下载）必须持 <b>socket_mtx</b>，绕过发送队列，防止 256KB 分片撑爆 32 格队列；<br>
+    ② 客户端管理器 <b>g_mgr.mtx</b> 保护链表增删改查；<b>server_shutdown</b> 防重入，关闭后禁止再调 client_mgr_*；<br>
+    ③ 摄像头"锁外转换"设计：YUYV→ARGB 在 frame_lock 外计算，切换索引时再上锁，避免阻塞 UI 读帧；<br>
+    ④ 全局配置 <code>g_app_config</code> 无锁，按"启动后只读 + 设置页单线程写"约定使用。
+  </div>
+</section>
+
+<!-- ================= ④ 界面流转 ================= -->
+<section class="panel" id="ui">
+  <h2><span class="idx">4</span>界面流转</h2>
+  <div class="desc">全部界面在 <code>ui_main()</code> 一次性创建（仅创建不加载），通过 <code>lv_screen_load(_anim)</code> 切换。</div>
+
+  <div class="ui-flow">
+    <div class="ui-row">
+      <div class="ui-node boot"><div class="en">开机动画</div><div class="zh">ui_boot · 2.5s 定时器</div></div>
+      <div class="ui-arrow">→</div>
+      <div class="ui-node login"><div class="en">登录屏</div><div class="zh">密码校验 · 退出=清理资源</div></div>
+      <div class="ui-arrow">→</div>
+      <div class="ui-node home"><div class="en">首页</div><div class="zh">时间/状态/3×2 功能按钮</div></div>
+    </div>
+    <div class="ui-row">
+      <div class="ui-node fn"><div class="en">实时画面</div><div class="zh">tag1 · 摄像头/AI/拍照</div></div>
+      <div class="ui-node fn"><div class="en">离线 AI 识别</div><div class="zh">tag2 · BMP 浏览/推理/保存</div></div>
+      <div class="ui-node fn"><div class="en">环境数据</div><div class="zh">tag3 · 5 参数实时刷新</div></div>
+      <div class="ui-node fn"><div class="en">服务器管理</div><div class="zh">tag4 · 启停/列表/文件</div></div>
+      <div class="ui-node fn"><div class="en">硬件控制</div><div class="zh">tag5 · LED/流水灯/BEEP</div></div>
+      <div class="ui-node fn"><div class="en">系统设置</div><div class="zh">tag6 · 保存/重启/退出</div></div>
+    </div>
+    <div class="ui-arrow" style="transform: rotate(90deg);">↩</div>
+    <div class="ui-note">
+      各功能界面通过"返回"回到首页（<code>ui_home_scr_load()</code>）；离开实时画面时自动停止 AI 线程与摄像头线程。<br>
+      设置页"退出/重启"播放 1.5s 关机动画后调用 <code>system_cleanup()</code> 统一释放全部资源（线程/fd/设备/NPU/GPIO/LVGL）。
+    </div>
+  </div>
+</section>
+
+<footer>
+  开发文档：<b style="color:var(--text);">DEVELOPMENT_GUIDE.md</b>（19 章） · 协议规范：<b style="color:var(--text);">tcp.md</b>（615 行）<br>
+  本文档由源码分析自动生成：src/（41 个源文件，不含 font_*.c 字阵）+ tcp_client/（5 个源文件）
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('section.panel');
+  tabs.forEach(t => {
+    t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      panels.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById(t.dataset.t).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

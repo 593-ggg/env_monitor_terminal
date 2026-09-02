@@ -1,0 +1,40 @@
+CompileFlags:
+  Add:
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/ai
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/common
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/camera
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/network
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/ui
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/sensor
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/thread
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/font
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/image
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/tests
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/src/device
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/lvgl
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/utils
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/3rdparty/rknpu2/include
+    - -ID:/yue_qian/RK3568/env_monitor_terminal/3rdparty/librga/include
+    - -ID:/yue_qian/RK3568/env_monitor_terminal
+    - -DLV_CONF_INCLUDE_SIMPLE
+    - -ID:/VS code/arm64_include/aarch64-linux-gnu_include_c++_7.5.0
+    - -ID:/VS code/arm64_include/aarch64-linux-gnu_include_c++_7.5.0/aarch64-linux-gnu
+    - -ID:/VS code/arm64_include/aarch64-linux-gnu_include_c++_7.5.0/backward
+    - -ID:/VS code/arm64_include/lib_gcc_aarch64-linux-gnu_7.5.0_include
+    - -ID:/VS code/arm64_include/lib_gcc_aarch64-linux-gnu_7.5.0_include-fixed
+    - -ID:/VS code/arm64_include/include
+    - -ID:/VS code/arm64_include/aarch64-linux-gnu_libc_usr_include
+    - -D__linux__
+    - -D__aarch64__
+    - -D_POSIX_C_SOURCE=200809L
+    - -D_DEFAULT_SOURCE
+    - --target=aarch64-linux-gnu
+  Remove:
+    - -fms-extensions
+    - -fdelayed-template-parsing
+
+Diagnostics:
+  UnusedIncludes: None
+  Suppress:
+    - unused-includes

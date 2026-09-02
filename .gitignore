@@ -1,0 +1,18 @@
+# 构建输出目录
+build/
+
+# 编译产物目录（build.sh 自动生成：可执行文件、lib、model 拷贝、run.sh）
+bin/
+
+# 编译中间产物
+*.o
+*.a
+
+# 运行时生成目录（TCP 上传目录）
+uploads/
+
+# IDE / 工具配置
+.vscode/
+.idea/
+.workbuddy/
+compile_commands.json
